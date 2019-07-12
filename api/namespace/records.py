@@ -12,6 +12,9 @@ class Records(Resource):
     parser.add_argument("record", type=str, required=True)
 
     def get(self):
+        """
+        Get all records
+        """        
         conn = conn_db()
         cur = conn.cursor(real_dict_cursor=True)
         cur.execute("""
@@ -24,6 +27,9 @@ class Records(Resource):
     
     @ns.expect(parser)
     def post(self):
+        """
+        Add a record
+        """        
         conn = conn_db()
         cur = conn.cursor(real_dict_cursor=True)
         cur.execute("""
@@ -44,6 +50,9 @@ class Record(Resource):
     parser.add_argument("record", type=str, required=True)
 
     def get(self, id):
+        """
+        Get a record given id
+        """        
         conn = conn_db()
         cur = conn.cursor(real_dict_cursor=True)
         cur.execute("""
@@ -57,6 +66,9 @@ class Record(Resource):
 
     @ns.expect(parser)
     def put(self):
+        """
+        Update record via SQS
+        """
 
         message = {
             "record": self.parser.parse_args()["record"],

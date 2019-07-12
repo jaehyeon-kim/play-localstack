@@ -20,14 +20,13 @@ class CustomJSONEncoder(JSONEncoder):
 
 app = Flask(__name__)
 app.config.from_mapping(
-    DB_CONNECT="postgresql://testuser:testpass@localhost:6000/testdb"
+    DB_CONNECT="postgresql://testuser:testpass@localhost:6432/testdb"
 )
 app.json_encoder=CustomJSONEncoder
 app.url_map.strict_slashes=False
 cors = CORS(app, resources={"*": {"origins": "*"}})
 app.config.setdefault('RESTPLUS_MASK_HEADER', 'X-Fields')
 app.config.setdefault('RESTPLUS_MASK_SWAGGER', False)
-
 
 
 api.init_app(app)

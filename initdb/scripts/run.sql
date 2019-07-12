@@ -26,7 +26,7 @@ CREATE TABLE testschema.records (
 	CONSTRAINT records_pkey PRIMARY KEY (id)
 );
 
-INSERT INTO testschema.records (record) VALUES
+INSERT INTO testschema.records (record, source) VALUES
 ('foo', 'web'),
 ('bar', 'web'),
 ('baz', 'web');

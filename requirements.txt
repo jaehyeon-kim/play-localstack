@@ -2,3 +2,4 @@ flask
 flask_restplus
 flask_cors
 psycopg2-binary
+boto3
