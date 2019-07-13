@@ -1,13 +1,43 @@
 version: '3.7'
 services:
-  postgres:
-    image: postgres
+  localstack:
+    image: localstack/localstack:latest
     ports:
-      - 6432:5432
-    volumes:
-      - ./initdb/scripts:/docker-entrypoint-initdb.d
+      - '4563-4584:4563-4584'
+      - '8080:8080'
     environment:
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpass
-      TZ: 'Australia/Sydney'
-      PGTZ: 'Australia/Sydney'
+      - SERVICES=s3,sqs,lambda
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - HOSTNAME_EXTERNAL=localstack
+    # volumes:
+    #   - './.localstack:/tmp/localstack'
+    #   - '/var/run/docker.sock:/var/run/docker.sock'
+  initlocalstack:
+    build:
+      context: .
+      dockerfile: ./initlocalstack/Dockerfile
+    environment:
+      - AWS_ACCESS_KEY_ID=foobar
+      - AWS_SECRET_ACCESS_KEY=foobar
+      - MAX_WAIT_SEC=10
+      - AWS_DEFAULT_REGION=ap-southeast-2
+      - BUCKET_NAME=dev-bucket
+      - QUEUE_NAME=dev-queue.fifo
+    volumes:
+      - ./initlocalstack/docker-entrypoint.sh:/docker-entrypoint.sh
+      - ./initlocalstack/src:/tmp/src
+    depends_on:
+      - localstack
+
+  # postgres:
+  #   image: postgres
+  #   ports:
+  #     - 6432:5432
+  #   volumes:
+  #     - ./initdb/scripts:/docker-entrypoint-initdb.d
+  #   environment:
+  #     POSTGRES_USER: testuser
+  #     POSTGRES_PASSWORD: testpass
+  #     TZ: 'Australia/Sydney'
+  #     PGTZ: 'Australia/Sydney'
