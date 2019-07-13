@@ -5,24 +5,16 @@ from flask_cors import CORS
 
 from .namespace import api
 from . import db
+from . import utils
 
-class CustomJSONEncoder(JSONEncoder):
-    def default(self, obj):
-        try:
-            if isinstance(obj, datetime):
-                return obj.isoformat()
-            iterable = iter(obj)
-        except TypeError:
-            pass
-        else:
-            return list(iterable)
-        return JSONEncoder.default(self, obj)
 
 app = Flask(__name__)
 app.config.from_mapping(
-    DB_CONNECT="postgresql://testuser:testpass@localhost:6432/testdb"
+    DB_CONNECT="postgresql://testuser:testpass@localhost:6432/testdb",
+    IS_LOCAL_STACK="1",
+    QUEUE_NAME="dev-queue"
 )
-app.json_encoder=CustomJSONEncoder
+app.json_encoder=utils.CustomJSONEncoder
 app.url_map.strict_slashes=False
 cors = CORS(app, resources={"*": {"origins": "*"}})
 app.config.setdefault('RESTPLUS_MASK_HEADER', 'X-Fields')

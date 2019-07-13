@@ -3,21 +3,25 @@ import time
 import requests
 import boto3
 
+IS_LOCAL_STACK = os.environ["IS_LOCAL_STACK"]
 AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
 MAX_WAIT_SEC = int(os.getenv("MAX_WAIT_SEC", 10))
 
 
 def set_endpoint_url(service, hostname="localstack"):
-    mapping = {"s3": 4572, "sqs": 4576, "lambda": 4574}
+    mapping = {"s3": 4572, "sqs": 4576, "lambda": 4574, "iam": 4593, "logs":4586}
     return "http://{0}:{1}".format(hostname, mapping[service])
 
-def set_client(service, region=None):
+
+def init_service(service, is_client=True, region=None):
     session = boto3.session.Session()
-    return session.client(
-        service_name=service, 
-        endpoint_url=set_endpoint_url(service),
-        region_name = AWS_DEFAULT_REGION if region is None else region
-    )
+    args = {"service_name": service}
+    if IS_LOCAL_STACK == "1":
+        args.update({
+            "endpoint_url": set_endpoint_url(service),
+            "region_name": "ap-southeast-2" if region is None else region
+        })
+    return session.client(**args) if is_client else session.resource(**args)
 
 
 def wait_for_services():
@@ -38,27 +42,67 @@ def wait_for_services():
         time.sleep(1)
 
 
-def create_queue(client, name, attributes):
+def create_queue(name, attributes):
     print("create queue - {0}".format(name))
+    client = init_service("sqs")
     try:
-        resp_queue = client.create_queue(
+        resp = client.create_queue(
             QueueName=name, 
             Attributes=attributes
         )
         print(">>>>>>>>>> queue created <<<<<<<<<<")
-        print(resp_queue)
+        print(resp)
     except Exception as e:
         print(e)
 
 
-def create_lambda(client, name, **kwargs):
+def create_execution_role(name):
+    print("create execution role of - {0}".format(name))
+    client = init_service("iam")
+    try:
+        resp = client.create_role(
+                RoleName="execution-role-{0}".format(name),
+                AssumeRolePolicyDocument='''{
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "logs:*"
+                        ],
+                        "Resource": "arn:aws:logs:*:*:*"
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:PutObject"
+                        ],
+                        "Resource": "arn:aws:s3:::*"
+                    }
+                ]
+            }''')
+        print(">>>>>>>>>> execution role created <<<<<<<<<<")
+        print(resp)
+        return resp
+    except Exception as e:
+        print(e)
+
+def create_lambda(name, **kwargs):
     print("create function - {0}".format(name))
+    client = init_service("lambda")
     try:
         runtime = kwargs["runtime"] if "runtime" in kwargs else "python3.6"
         memory = kwargs["memory"] if "memory" in kwargs else 128
         environment = {}
         if "envars" in kwargs:
             environment.update({"Variables": kwargs["envars"]})
+
+        if "role" in kwargs:
+            role = kwargs["role"]
+        else:
+            role = "arn:aws:lambda:ap-southeast-2:000000000000:function:{0}".format(name)
+                
         if "bucket" in kwargs:
             code={"S3Bucket": kwargs["bucket"], "S3Key": kwargs["key"]}
         else:
@@ -67,7 +111,7 @@ def create_lambda(client, name, **kwargs):
         resp = client.create_function(
             FunctionName=name,
             Runtime=runtime,
-            Role="arn:aws:iam::123456:role/{0}".format(name.lower()),
+            Role=role,
             Handler="lambda_function.lambda_handler",
             Code=code,
             MemorySize=memory,
@@ -79,8 +123,9 @@ def create_lambda(client, name, **kwargs):
         print(e)
 
 
-def create_event_source_mapping(client, name, eventArn, **kwargs):
+def create_event_source_mapping(name, eventArn, **kwargs):
     print("create event source mapping to function - {0}".format(name))
+    client = init_service("lambda")
     try:
         batchsize = kwargs["batchsize"] if "batchsize" in kwargs else 10
         resp = client.create_event_source_mapping(

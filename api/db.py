@@ -7,8 +7,7 @@ from psycopg2.extras import RealDictCursor
 class PostgreSQLConnection(psycopg2.extensions.connection):
     def cursor(self, real_dict_cursor=False):
         """
-        Get a new cursor.
-        If real_dict_cursor is set, a RealDictCursor is returned
+        Get a new cursor - if real_dict_cursor is set, a RealDictCursor is returned
         """
         kwargs = {}
         if real_dict_cursor:

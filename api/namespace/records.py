@@ -1,10 +1,14 @@
+import json
 from flask import jsonify
 from flask_restplus import Resource, Namespace
+import boto3
 
 from api.db import conn_db
+from api.utils import send_message
+
+QUEUE_NAME = flask.current_app.config["QUEUE_NAME"]
 
 ns = Namespace("records")
-
 
 @ns.route("/")
 class Records(Resource):
@@ -17,10 +21,10 @@ class Records(Resource):
         """        
         conn = conn_db()
         cur = conn.cursor(real_dict_cursor=True)
-        cur.execute("""
+        cur.execute(
+            """
             SELECT * FROM records ORDER BY created_on DESC
-        """
-        )
+            """)
 
         records = cur.fetchall()
         return jsonify(records)
@@ -28,20 +32,14 @@ class Records(Resource):
     @ns.expect(parser)
     def post(self):
         """
-        Add a record
-        """        
-        conn = conn_db()
-        cur = conn.cursor(real_dict_cursor=True)
-        cur.execute("""
-            INSERT INTO records (record, source) 
-                VALUES (%(record)s)
-                RETURNING *
-        """, {
-            "record": self.parser.parse_args()["record"],
-            "source": "web"    
-        })
-
-        return jsonify(cur.fetchone())
+        Create a record via queue
+        """
+        try:
+            body = {"record": self.parser.parse_args()["record"]}
+            send_message(QUEUE_NAME, json.dumps(body))
+            return "", 204
+        except Exception as e:
+            return "", 500
 
 
 @ns.route("/<string:id>")
@@ -53,26 +51,38 @@ class Record(Resource):
         """
         Get a record given id
         """        
-        conn = conn_db()
-        cur = conn.cursor(real_dict_cursor=True)
-        cur.execute("""
-            SELECT * FROM records WHERE id = %(id)s
-        """, {"id": id})
-
-        record = cur.fetchone()
+        record = Record.get_record(id)
         if record is None:
             return {"message": "No record"}, 404
         return jsonify(record)
 
     @ns.expect(parser)
-    def put(self):
+    def put(self, id):
         """
-        Update record via SQS
+        Update a record via SQS
         """
+        record = Record.get_record(id)
+        if record is None:
+            return {"message": "No record"}, 404        
 
-        message = {
-            "record": self.parser.parse_args()["record"],
-            "source": "queue"
-        }
+        try:
+            message = {
+                "id": record["id"],
+                "record": self.parser.parse_args()["record"],
+                "num_changed": record["num_changed"] + 1
+            }
+            send_message(QUEUE_NAME, json.dumps(body))
+            return "", 204
+        except Exception as e:
+            return "", 500
 
-        return "", 204
+    @staticmethod
+    def get_record(id):
+        conn = conn_db()
+        cur = conn.cursor(real_dict_cursor=True)
+        cur.execute(
+            """
+            SELECT * FROM records WHERE id = %(id)s
+            """, {"id": id})
+
+        return cur.fetchone()
