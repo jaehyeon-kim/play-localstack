@@ -1,30 +1,25 @@
 import os
 import boto3
 from utils import wait_for_services, set_client, \
-    create_bucket, create_queue
+    create_queue, create_lambda, create_event_source_mapping
 
 wait_for_services()
 
-BUCKET_NAME = os.environ["BUCKET_NAME"]
 QUEUE_NAME = os.environ["QUEUE_NAME"]
+FUNCTION_NAME = os.environ["FUNCTION_NAME"]
+PKG_PATH = os.environ["PKG_PATH"]
 
 ## set up clients
-s3 = set_client("s3")
 sqs = set_client("sqs")
-
-## create S3 bucket (to upload lambda package)
-create_bucket(s3, BUCKET_NAME)
+lambda_client = set_client("lambda")
 
 ## create queue
 attributes = {"DelaySeconds": "1", "FifoQueue": "true"}
 create_queue(sqs, QUEUE_NAME, attributes)
+QUEUE_ARN = "arn:aws:sqs:ap-southeast-2:queue:{0}".format(QUEUE_NAME)
 
-## set up lambda function
-# upload lambda package
+##  create lambda function and event source mapping
+envars = {"foo": "bar"}
+create_lambda(lambda_client, FUNCTION_NAME, path=PKG_PATH, envars=envars)
 
-
-# create lambda function
-
-
-# set event mapping
-
+create_event_source_mapping(lambda_client, FUNCTION_NAME, QUEUE_ARN)

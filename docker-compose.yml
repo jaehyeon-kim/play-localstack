@@ -5,14 +5,18 @@ services:
     ports:
       - '4563-4584:4563-4584'
       - '8080:8080'
+    privileged: true
     environment:
       - SERVICES=s3,sqs,lambda
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
       - HOSTNAME_EXTERNAL=localstack
-    # volumes:
-    #   - './.localstack:/tmp/localstack'
-    #   - '/var/run/docker.sock:/var/run/docker.sock'
+      - DEFAULT_REGION=ap-southeast-2
+      - LAMBDA_EXECUTOR=docker-reuse
+      # - LAMBDA_REMOTE_DOCKER=false
+    volumes:
+      # - './.localstack:/tmp/localstack'
+      - '/var/run/docker.sock:/var/run/docker.sock'
   initlocalstack:
     build:
       context: .
@@ -22,14 +26,17 @@ services:
       - AWS_SECRET_ACCESS_KEY=foobar
       - MAX_WAIT_SEC=10
       - AWS_DEFAULT_REGION=ap-southeast-2
-      - BUCKET_NAME=dev-bucket
+      #- BUCKET_NAME=dev-bucket
       - QUEUE_NAME=dev-queue.fifo
+      - FUNCTION_NAME=dev-lambda
+      - PKG_PATH=/tmp/lambdas/lambda_package.zip
     volumes:
       - ./initlocalstack/docker-entrypoint.sh:/docker-entrypoint.sh
       - ./initlocalstack/src:/tmp/src
+      - ./lambdas/lambda_package.zip:/tmp/lambdas/lambda_package.zip
     depends_on:
       - localstack
-
+  #     - postgres
   # postgres:
   #   image: postgres
   #   ports:
