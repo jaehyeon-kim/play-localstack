@@ -1,7 +1,7 @@
 import os
 import boto3
 from utils import wait_for_services, create_queue, \
-    create_execution_role, create_lambda, create_event_source_mapping
+    get_queue_attributes, create_lambda, create_event_source_mapping
 
 wait_for_services()
 
@@ -15,16 +15,18 @@ DB_CONNECT = os.environ["DB_CONNECT"]
 ## create queue
 #attributes = {"DelaySeconds": "1", "FifoQueue": "true"}
 attributes = {"DelaySeconds": "1"}
-create_queue(QUEUE_NAME, attributes)
-QUEUE_ARN = "arn:aws:sqs:ap-southeast-2:queue:{0}".format(QUEUE_NAME)
+resp = create_queue(QUEUE_NAME, attributes)
+
+queueUrl = resp["QueueUrl"]
+attributes = ["QueueArn"]
+resp = get_queue_attributes(queueUrl, attributes)
+
+qeueArn = resp["Attributes"]["QueueArn"]
 
 ##  create lambda function and event source mapping
-role = create_execution_role(FUNCTION_NAME)
-role_arn = role["Role"]["Arn"]
-
 envars = {
-    "IS_LOCAL_STACK": IS_LOCAL_STACK, "DB_CONNECT": DB_CONNECT, "QUEUE_NAME": QUEUE_NAME
+    "IS_LOCAL_STACK": IS_LOCAL_STACK, "DB_CONNECT": DB_CONNECT
 }
-create_lambda(FUNCTION_NAME, path=PKG_PATH, envars=envars, role=role_arn)
+create_lambda(FUNCTION_NAME, path=PKG_PATH, envars=envars)
 
-create_event_source_mapping(FUNCTION_NAME, QUEUE_ARN)
+create_event_source_mapping(FUNCTION_NAME, qeueArn)

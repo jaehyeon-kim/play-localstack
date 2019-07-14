@@ -5,7 +5,6 @@ import psycopg2
 
 IS_LOCAL_STACK = os.environ["IS_LOCAL_STACK"]
 DB_CONNECT = os.environ["DB_CONNECT"]
-QUEUE_NAME = os.environ["QUEUE_NAME"]
 
 def set_endpoint_url(service, hostname="localhost"):
     mapping = {"s3": 4572, "sqs": 4576, "lambda": 4574, "iam": 4593, "logs":4586}
@@ -34,11 +33,11 @@ def process_messages(name):
 
 def lambda_handler(event, context):
     print(event)
-    try:
-        process_messages(QUEUE_NAME)
-    except Exception as e:
-        print("fails to process messages")
-        print(e)
+    # try:
+    #     process_messages(QUEUE_NAME)
+    # except Exception as e:
+    #     print("fails to process messages")
+    #     print(e)
     
     # print("Hello world")
     # return json.dumps({"message": "ok"})

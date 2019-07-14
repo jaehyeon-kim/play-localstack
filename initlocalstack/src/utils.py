@@ -52,41 +52,23 @@ def create_queue(name, attributes):
         )
         print(">>>>>>>>>> queue created <<<<<<<<<<")
         print(resp)
-    except Exception as e:
-        print(e)
-
-
-def create_execution_role(name):
-    print("create execution role of - {0}".format(name))
-    client = init_service("iam")
-    try:
-        resp = client.create_role(
-                RoleName="execution-role-{0}".format(name),
-                AssumeRolePolicyDocument='''{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "logs:*"
-                        ],
-                        "Resource": "arn:aws:logs:*:*:*"
-                    },
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:GetObject",
-                            "s3:PutObject"
-                        ],
-                        "Resource": "arn:aws:s3:::*"
-                    }
-                ]
-            }''')
-        print(">>>>>>>>>> execution role created <<<<<<<<<<")
-        print(resp)
         return resp
     except Exception as e:
         print(e)
+
+def get_queue_attributes(queueUrl, attributes):
+    print("get queue attributes, url - {0}".format(queueUrl))
+    client = init_service("sqs")
+    try:
+        resp = client.get_queue_attributes(
+            QueueUrl=queueUrl,
+            AttributeNames=attributes
+        )
+        print(">>>>>>>>>> queue attributes <<<<<<<<<<")
+        print(resp)
+        return resp
+    except expression as identifier:
+        pass
 
 def create_lambda(name, **kwargs):
     print("create function - {0}".format(name))
@@ -98,10 +80,11 @@ def create_lambda(name, **kwargs):
         if "envars" in kwargs:
             environment.update({"Variables": kwargs["envars"]})
 
-        if "role" in kwargs:
-            role = kwargs["role"]
-        else:
-            role = "arn:aws:lambda:ap-southeast-2:000000000000:function:{0}".format(name)
+        role = "arn:aws:lambda:ap-southeast-2:000000000000:function:{0}".format(name)
+        # if "role" in kwargs:
+        #     role = kwargs["role"]
+        # else:
+        #     role = "arn:aws:lambda:ap-southeast-2:000000000000:function:{0}".format(name)
                 
         if "bucket" in kwargs:
             code={"S3Bucket": kwargs["bucket"], "S3Key": kwargs["key"]}
@@ -138,6 +121,38 @@ def create_event_source_mapping(name, eventArn, **kwargs):
     except Exception as e:
         print(e)
 
+
+# def create_execution_role(name):
+#     print("create execution role of - {0}".format(name))
+#     client = init_service("iam")
+#     try:
+#         resp = client.create_role(
+#                 RoleName="execution-role-{0}".format(name),
+#                 AssumeRolePolicyDocument='''{
+#                 "Version": "2012-10-17",
+#                 "Statement": [
+#                     {
+#                         "Effect": "Allow",
+#                         "Action": [
+#                             "logs:*"
+#                         ],
+#                         "Resource": "arn:aws:logs:*:*:*"
+#                     },
+#                     {
+#                         "Effect": "Allow",
+#                         "Action": [
+#                             "s3:GetObject",
+#                             "s3:PutObject"
+#                         ],
+#                         "Resource": "arn:aws:s3:::*"
+#                     }
+#                 ]
+#             }''')
+#         print(">>>>>>>>>> execution role created <<<<<<<<<<")
+#         print(resp)
+#         return resp
+#     except Exception as e:
+#         print(e)
 
 
 # BUCKET_NAME = os.environ["BUCKET_NAME"]
