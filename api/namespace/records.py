@@ -1,4 +1,5 @@
 import json
+import flask
 from flask import jsonify
 from flask_restplus import Resource, Namespace
 import boto3
@@ -6,14 +7,12 @@ import boto3
 from api.db import conn_db
 from api.utils import send_message
 
-QUEUE_NAME = flask.current_app.config["QUEUE_NAME"]
-
 ns = Namespace("records")
 
 @ns.route("/")
 class Records(Resource):
     parser = ns.parser()
-    parser.add_argument("record", type=str, required=True)
+    parser.add_argument("message", type=str, required=True)
 
     def get(self):
         """
@@ -35,8 +34,11 @@ class Records(Resource):
         Create a record via queue
         """
         try:
-            body = {"record": self.parser.parse_args()["record"]}
-            send_message(QUEUE_NAME, json.dumps(body))
+            body = {
+                "id": None,
+                "message": self.parser.parse_args()["message"]
+            }
+            send_message(flask.current_app.config["QUEUE_NAME"], json.dumps(body))
             return "", 204
         except Exception as e:
             return "", 500
@@ -45,7 +47,7 @@ class Records(Resource):
 @ns.route("/<string:id>")
 class Record(Resource):
     parser = ns.parser()
-    parser.add_argument("record", type=str, required=True)
+    parser.add_argument("message", type=str, required=True)
 
     def get(self, id):
         """
@@ -59,7 +61,7 @@ class Record(Resource):
     @ns.expect(parser)
     def put(self, id):
         """
-        Update a record via SQS
+        Update a record via queue
         """
         record = Record.get_record(id)
         if record is None:
@@ -68,10 +70,9 @@ class Record(Resource):
         try:
             message = {
                 "id": record["id"],
-                "record": self.parser.parse_args()["record"],
-                "num_changed": record["num_changed"] + 1
+                "message": self.parser.parse_args()["message"]
             }
-            send_message(QUEUE_NAME, json.dumps(body))
+            send_message(flask.current_app.config["QUEUE_NAME"], json.dumps(message))
             return "", 204
         except Exception as e:
             return "", 500

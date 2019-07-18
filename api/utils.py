@@ -1,28 +1,13 @@
-import flask
 import os
 import json
 import boto3
-
-IS_LOCAL_STACK = flask.current_app.config["IS_LOCAL_STACK"]
-
-def set_endpoint_url(service, hostname="localhost"):
-    mapping = {"s3": 4572, "sqs": 4576, "lambda": 4574, "iam": 4593, "logs":4586}
-    return "http://{0}:{1}".format(hostname, mapping[service])
+from datetime import datetime
+from flask.json import JSONEncoder
 
 
-def init_service(service, is_client=True, region=None):
+def send_message(name, body, delaySec=0):
     session = boto3.session.Session()
-    args = {"service_name": service}
-    if IS_LOCAL_STACK == "1":
-        args.update({
-            "endpoint_url": set_endpoint_url(service),
-            "region_name": "ap-southeast-2" if region is None else region
-        })
-    return session.client(**args) if is_client else session.resource(**args)
-
-
-def send_message(name, body, delaySec=0)
-    client = init_service("sqs")
+    client = session.client(service_name="sqs", endpoint_url="http://localhost:4576")
     queueUrl = client.get_queue_url(QueueName=name)["QueueUrl"]
     resp = client.send_message(
         QueueUrl=queueUrl,

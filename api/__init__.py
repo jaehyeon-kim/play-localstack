@@ -10,9 +10,8 @@ from . import utils
 
 app = Flask(__name__)
 app.config.from_mapping(
-    DB_CONNECT="postgresql://testuser:testpass@localhost:6432/testdb",
-    IS_LOCAL_STACK="1",
-    QUEUE_NAME="dev-queue"
+    DB_CONNECT="postgresql://testuser:testpass@localhost:5432/testdb",
+    QUEUE_NAME="test-queue"
 )
 app.json_encoder=utils.CustomJSONEncoder
 app.url_map.strict_slashes=False
