@@ -10,54 +10,18 @@ services:
       - SERVICES=s3,sqs,lambda,logs,iam,cloudwatch
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
-      - HOSTNAME_EXTERNAL=localstack
+      # - HOSTNAME_EXTERNAL=localstack
       - DEFAULT_REGION=ap-southeast-2
       - LAMBDA_EXECUTOR=docker-reuse
       - LAMBDA_REMOTE_DOCKER=false
       - AWS_ACCESS_KEY_ID=foobar
       - AWS_SECRET_ACCESS_KEY=foobar
       - AWS_DEFAULT_REGION=ap-southeast-2
-      - MAX_WAIT_SEC=10
-      - IS_LOCAL_STACK=1
-      - DB_CONNECT='postgresql://testuser:testpass@localhost:6432/testdb'
+      - DB_CONNECT='postgresql://testuser:testpass@localhost:5432/testdb'
       - QUEUE_NAME=dev-queue
       - FUNCTION_NAME=dev-lambda
       - PKG_PATH=/tmp/lambdas/lambda_package.zip      
     volumes:
-      - ./initlocalstack/create-resources.sh:/docker-entrypoint-initaws.d/create-resources.sh
-      - ./initlocalstack/src:/tmp/src
-      - ./lambdas/lambda_package.zip:/tmp/lambdas/lambda_package.zip       
+      - ./initlocalstack/create-resources.sh:/docker-entrypoint-initaws.d/create-resources.sh   
       # - './.localstack:/tmp/localstack'
       - '/var/run/docker.sock:/var/run/docker.sock'
-  # initlocalstack:
-  #   build:
-  #     context: .
-  #     dockerfile: ./initlocalstack/Dockerfile
-  #   environment:
-  #     - AWS_ACCESS_KEY_ID=foobar
-  #     - AWS_SECRET_ACCESS_KEY=foobar
-  #     - AWS_DEFAULT_REGION=ap-southeast-2
-  #     - MAX_WAIT_SEC=10
-  #     - IS_LOCAL_STACK=1
-  #     - DB_CONNECT='postgresql://testuser:testpass@localhost:6432/testdb'
-  #     - QUEUE_NAME=dev-queue
-  #     - FUNCTION_NAME=dev-lambda
-  #     - PKG_PATH=/tmp/lambdas/lambda_package.zip
-  #   volumes:
-  #     - ./initlocalstack/docker-entrypoint.sh:/docker-entrypoint.sh
-  #     - ./initlocalstack/src:/tmp/src
-  #     - ./lambdas/lambda_package.zip:/tmp/lambdas/lambda_package.zip
-  #   depends_on:
-  #     - localstack
-  #     - postgres
-  # postgres:
-  #   image: postgres
-  #   ports:
-  #     - 6432:5432
-  #   volumes:
-  #     - ./initdb/scripts:/docker-entrypoint-initdb.d
-  #   environment:
-  #     POSTGRES_USER: testuser
-  #     POSTGRES_PASSWORD: testpass
-  #     TZ: 'Australia/Sydney'
-  #     PGTZ: 'Australia/Sydney'
