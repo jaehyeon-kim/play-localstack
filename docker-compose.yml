@@ -7,21 +7,32 @@ services:
       - '8080:8080'
     privileged: true
     environment:
-      - SERVICES=s3,sqs,lambda,logs,iam,cloudwatch
+      - SERVICES=s3,sqs,lambda
       - DEBUG=1
       - DATA_DIR=/tmp/localstack/data
-      # - HOSTNAME_EXTERNAL=localstack
       - DEFAULT_REGION=ap-southeast-2
       - LAMBDA_EXECUTOR=docker-reuse
       - LAMBDA_REMOTE_DOCKER=false
+      - LAMBDA_DOCKER_NETWORK=play-localstack_default
       - AWS_ACCESS_KEY_ID=foobar
       - AWS_SECRET_ACCESS_KEY=foobar
       - AWS_DEFAULT_REGION=ap-southeast-2
       - DB_CONNECT='postgresql://testuser:testpass@localhost:5432/testdb'
-      - QUEUE_NAME=dev-queue
-      - FUNCTION_NAME=dev-lambda
-      - PKG_PATH=/tmp/lambdas/lambda_package.zip      
+      - TEST_QUEUE=test-queue
+      - TEST_LAMBDA=test-lambda
     volumes:
-      - ./initlocalstack/create-resources.sh:/docker-entrypoint-initaws.d/create-resources.sh   
+      - ./init/create-resources.sh:/docker-entrypoint-initaws.d/create-resources.sh
+      - ./init/lambda_package:/tmp/lambda_package   
       # - './.localstack:/tmp/localstack'
       - '/var/run/docker.sock:/var/run/docker.sock'
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ./init/scripts/run.sql:/docker-entrypoint-initdb.d/run.sql
+    environment:
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+      - TZ='Australia/Sydney'
+      - PGTZ='Australia/Sydney'

@@ -14,14 +14,9 @@ SET search_path TO testschema;
 -- change search_path on a database-level
 ALTER database "testdb" SET search_path TO testschema;
 
---
--- create table
---
-
 CREATE TABLE testschema.records (
 	id serial NOT NULL,
-	record varchar(30) NOT NULL,
-	num_changed int2 NOT NULL DEFAULT 1,
+	message varchar(30) NOT NULL,
 	created_on timestamptz NOT NULL DEFAULT now(),
 	CONSTRAINT records_pkey PRIMARY KEY (id)
 );
