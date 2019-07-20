@@ -23,7 +23,7 @@ def lambda_handler(event, context):
                 cur.execute(
                     """
                     INSERT INTO records (message) VALUES (%(message)s)
-                    """, {k:j for k,j in body.items() if j is not None})
+                    """, {k:v for k,v in body.items() if v is not None})
             else:
                 cur.execute(
                     """
