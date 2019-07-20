@@ -20,10 +20,10 @@ FLASK_APP=api FLASK_ENV=development flask run
 
 http http://localhost:5000/api/records
 
-http http://localhost:5000/api/records/1
+http http://localhost:5000/api/records/4
 
 echo '{"message": "test post"}' | \
     http POST http://localhost:5000/api/records
 
 echo '{"message": "test put"}' | \
-    http PUT http://localhost:5000/api/records/4
+    http PUT http://localhost:5000/api/records/5
